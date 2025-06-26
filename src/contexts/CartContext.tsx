@@ -1,10 +1,21 @@
 // src/contexts/CartContext.tsx
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { CartItem, CartContextType } from '@/types/cart';
-import { getCartFromLocalStorage, saveCartToLocalStorage, clearCartInLocalStorage } from '@/lib/cart';
-import { Car } from '@/types/car'; // Import Car để dùng trong addToCart
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+} from "react";
+import { CartItem, CartContextType } from "@/types/cart";
+import {
+  getCartFromLocalStorage,
+  saveCartToLocalStorage,
+  clearCartInLocalStorage,
+} from "@/lib/cart";
+import { Car } from "@/types/car"; // Import Car để dùng trong addToCart
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -27,38 +38,43 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   // Hàm thêm sản phẩm vào giỏ hàng
   const addToCart = useCallback((car: Car) => {
-    setCartItems(prevItems => {
-      const existingItemIndex = prevItems.findIndex(item => item.car.id === car.id);
-
+    if (!car || !car.id) {
+      console.error("addToCart: car is undefined hoặc thiếu id", car);
+      return;
+    }
+    setCartItems((prevItems) => {
+      // Lọc bỏ các item lỗi (item.car bị undefined/null)
+      const validItems = prevItems.filter((item) => item.car && item.car.id);
+      const existingItemIndex = validItems.findIndex(
+        (item) => item.car.id === car.id
+      );
       if (existingItemIndex > -1) {
-        // Nếu xe đã có trong giỏ hàng, tăng số lượng (nếu cần, nhưng với xe thường là 1)
-        // Với trường hợp bán xe, thường chỉ cho phép thêm 1 chiếc của loại đó.
-        // Bạn có thể tùy chỉnh logic này. Ví dụ: nếu đây là bán xe duy nhất, không cho thêm nữa.
-        // Tạm thời, chúng ta sẽ không tăng số lượng mà chỉ đảm bảo có mặt.
-        // Nếu bạn muốn hỗ trợ số lượng > 1 cho một loại xe, hãy thay đổi logic ở đây.
         console.warn(`Xe ${car.name} (ID: ${car.id}) đã có trong giỏ hàng.`);
-        return prevItems; // Không thay đổi gì
+        return validItems;
       } else {
-        // Nếu xe chưa có, thêm mới với số lượng là 1
-        return [...prevItems, { car, quantity: 1 }];
+        return [...validItems, { car, quantity: 1 }];
       }
     });
   }, []);
 
   // Hàm xóa sản phẩm khỏi giỏ hàng
   const removeFromCart = useCallback((carId: string) => {
-    setCartItems(prevItems => prevItems.filter(item => item.car.id !== carId));
+    setCartItems((prevItems) =>
+      prevItems.filter((item) => item.car.id !== carId)
+    );
   }, []);
 
   // Hàm cập nhật số lượng sản phẩm
   // (Có thể không cần thiết lắm cho việc bán xe, nhưng hữu ích nếu có tính năng thuê xe hoặc bán phụ kiện)
   const updateQuantity = useCallback((carId: string, quantity: number) => {
-    setCartItems(prevItems => {
-      const updatedItems = prevItems.map(item =>
-        item.car.id === carId ? { ...item, quantity: Math.max(1, quantity) } : item
+    setCartItems((prevItems) => {
+      const updatedItems = prevItems.map((item) =>
+        item.car.id === carId
+          ? { ...item, quantity: Math.max(1, quantity) }
+          : item
       );
       // Lọc bỏ những item có số lượng = 0 nếu bạn muốn
-      return updatedItems.filter(item => item.quantity > 0);
+      return updatedItems.filter((item) => item.quantity > 0);
     });
   }, []);
 
@@ -75,7 +91,10 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   // Hàm tính tổng số tiền của giỏ hàng
   const getTotalAmount = useCallback(() => {
-    return cartItems.reduce((total, item) => total + item.car.price * item.quantity, 0);
+    return cartItems.reduce(
+      (total, item) => total + item.car.price * item.quantity,
+      0
+    );
   }, [cartItems]);
 
   const value: CartContextType = {
@@ -95,7 +114,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 export const useCart = () => {
   const context = useContext(CartContext);
   if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error("useCart must be used within a CartProvider");
   }
   return context;
 };
