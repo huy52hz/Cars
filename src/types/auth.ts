@@ -1,5 +1,5 @@
 // src/types/auth.ts
-export type UserRole = 'user' | 'admin';
+export type UserRole = "user" | "admin";
 
 export interface User {
   id: string;
@@ -11,9 +11,10 @@ export interface User {
   phone?: string;
   address?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
-export type UserWithoutPassword = Omit<User, 'password'>;
+export type UserWithoutPassword = Omit<User, "password">;
 
 export interface AuthContextType {
   user: UserWithoutPassword | null;
@@ -22,6 +23,8 @@ export interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  updateProfile: (updatedFields: Partial<Omit<UserWithoutPassword, 'email' | 'id' | 'role'>>) => Promise<boolean>;
-  refreshUser: () => void; 
+  updateProfile: (
+    updatedFields: Partial<Omit<UserWithoutPassword, "email" | "id" | "role">>
+  ) => Promise<boolean>;
+  refreshUser: () => void;
 }
